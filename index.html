@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BESYO AKADEMİ — Sınav Hazırlık Platformu</title>
+  <style>
+    :root {
+      --primary: #2563eb; --bg: #0f172a; --card-bg: #1e293b; --text: #f8fafc;
+      --text-muted: #94a3b8; --success: #10b981; --error: #ef4444; --warning: #f59e0b; --border: #334155;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
+
+    .hero { text-align: center; padding: 2.5rem 1rem 1.5rem 1rem; background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid var(--border); }
+    .hero h1 { font-size: 2.2rem; font-weight: 900; color: #fff; letter-spacing: -0.5px; margin-bottom: 0.5rem; }
+    .hero p { font-size: 0.9rem; font-weight: 300; color: var(--text-muted); max-width: 500px; margin: 0 auto; line-height: 1.4; }
+
+    main { flex: 1; max-width: 680px; width: 100%; margin: 0 auto; padding: 1.5rem 1rem; }
+    .nav-bar { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+    .btn-back { background: var(--card-bg); border: 1px solid var(--border); color: var(--text); padding: 0.5rem 0.9rem; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 600; display: none; }
+    .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: var(--primary); }
+
+    .list-container { display: flex; flex-direction: column; gap: 0.75rem; }
+    .item-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; cursor: pointer; transition: all 0.2s ease; display: flex; justify-content: space-between; align-items: center; }
+    .item-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+    .item-title { font-size: 1rem; font-weight: 600; }
+    .item-arrow { color: var(--text-muted); font-size: 1.2rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+    .badge { font-size: 0.75rem; padding: 0.25rem 0.6rem; border-radius: 20px; background: rgba(37,99,235,0.15); color: var(--primary); font-weight: 600; border: 1px solid rgba(37,99,235,0.3); }
+    .question-text { font-size: 1rem; line-height: 1.5; font-weight: 600; margin: 1rem 0; }
+    .options-list { display: flex; flex-direction: column; gap: 0.6rem; }
+    .option-btn { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 0.85rem 1rem; border-radius: 8px; text-align: left; font-size: 0.92rem; cursor: pointer; }
+    .option-btn.correct { background: rgba(16,185,129,0.2) !important; border-color: var(--success) !important; color: #6ee7b7; }
+    .option-btn.wrong { background: rgba(239,68,68,0.2) !important; border-color: var(--error) !important; color: #fca5a5; }
+
+    .explanation-box { margin-top: 1.25rem; padding: 1rem; background: rgba(15,23,42,0.6); border-radius: 8px; border-left: 4px solid var(--primary); display: none; }
+    .pro-tip-box { margin-top: 0.8rem; padding: 0.85rem; background: rgba(245,158,11,0.1); border-radius: 8px; border: 1px solid rgba(245,158,11,0.3); display: none; color: #fde68a; font-size: 0.88rem; }
+    .btn-next { width: 100%; background: var(--primary); color: white; border: none; padding: 0.9rem; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; margin-top: 1rem; display: none; }
+
+    .loading-state { text-align: center; padding: 2rem; color: var(--text-muted); }
+    .spinner { border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top: 3px solid var(--primary); width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 1rem auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    footer { background-color: var(--card-bg); border-top: 1px solid var(--border); padding: 1.25rem; text-align: center; margin-top: auto; }
+    footer a { color: #e1306c; text-decoration: none; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <h1>BESYO AKADEMİ</h1>
+    <p>Spor Bilimleri Fakültesi vize, final ve ÖABT sınavlarına özel platform.</p>
+  </div>
+
+  <main>
+    <div class="nav-bar">
+      <button class="btn-back" id="backBtn" onclick="goBack()">← Geri Dön</button>
+    </div>
+
+    <div id="courseStep">
+      <div class="section-title">Ders Seçiniz</div>
+      <div class="list-container" id="coursesList"></div>
+    </div>
+
+    <div id="topicStep" style="display: none;">
+      <div class="section-title" id="selectedCourseTitle">Konu Seçiniz</div>
+      <div class="list-container" id="topicsList"></div>
+    </div>
+
+    <div id="questionStep" style="display: none;">
+      <div id="loadingView" class="loading-state">
+        <div class="spinner"></div>
+        <p id="loadingText">Bulut veritabanı kontrol ediliyor...</p>
+      </div>
+      <div id="questionView"></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>İletişim & Geliştirici:</p>
+    <a href="https://instagram.com/okan_ivgen" target="_blank">📸 Instagram: @okan_ivgen</a>
+  </footer>
+
+  <script>
+    // --- APİ VE BULUT VERİTABANI AYARLARI ---
+    const GEMINI_API_KEY = "AQ.Ab8RN6LxOU8SUN5bjAt6XbncdYk9VF-sv3XvAaOF3yHRd6EiGQ";
+    const JSONBIN_MASTER_KEY = "$2a$10$kH1f9sFiKZaHBbnNEzeRLeSph10loVgMc6tca.80JBEwNGJlf7pJe";
+
+    const besyoData = {
+      "Anatomi": ["Kas Sistemi (Miyoloji)", "İskelet Sistemi (Osteoloji)", "Eklem Sistemi (Artroloji)", "Dolaşım ve Solunum Anatomisi", "Sinir ve Duyu Organları"],
+      "Spor Fizyolojisi": ["Enerji Sistemleri ve Laktat", "Kardiyovasküler Egzersiz Yanıtları", "Nöromüsküler Fizyoloji", "Çevre Koşulları ve Performans", "Hormonlar ve Egzersiz"],
+      "Antrenman Bilgisi": ["Kuvvet Antrenmanları", "Dayanıklılık ve Interval", "Sürat ve Esneklik", "Periyotlama İlkeleri", "Sürantrenman (Overtraining)"],
+      "Kineziyoloji ve Biyomekanik": ["Kaldıraç Sistemleri ve Tork", "Hareket Analizi", "Eklemlerin Biyomekaniği", "Kinetik ve Kinematik"],
+      "Sporcu Sağlığı ve İlk Yardım": ["Spor Yaralanmaları ve RICE", "Saha İçi İlk Yardım", "Spora Dönüş ve Rehabilitasyon", "Bandajlama Teknikleri"],
+      "Spor Psikolojisi": ["Egzersizde Motivasyon", "Kaygı ve Stres Yönetimi", "Odaklanma ve İmajiner", "Takım Dinamikleri"],
+      "Beden Eğitimi Öğretim Yöntemleri": ["Öğretim Stratejileri", "Ders Planı Hazırlama", "Sınıf Yönetimi ve Ölçme"],
+      "Spor Yönetimi ve Organizasyon": ["Tesis ve Etkinlik Yönetimi", "Spor Pazarlaması", "Spor Hukuku ve Mevzuat"]
+    };
+
+    let selectedCourse = "";
+    let selectedTopic = "";
+    let currentQuestions = [];
+    let currentIndex = 0;
+
+    function renderCourses() {
+      const container = document.getElementById("coursesList");
+      container.innerHTML = "";
+      for (let course in besyoData) {
+        const card = document.createElement("div");
+        card.className = "item-card";
+        card.onclick = () => selectCourse(course);
+        card.innerHTML = `<span class="item-title">${course}</span><span class="item-arrow">→</span>`;
+        container.appendChild(card);
+      }
+    }
+
+    function selectCourse(courseName) {
+      selectedCourse = courseName;
+      document.getElementById("courseStep").style.display = "none";
+      document.getElementById("topicStep").style.display = "block";
+      document.getElementById("backBtn").style.display = "inline-block";
+      document.getElementById("selectedCourseTitle").textContent = `${courseName} — Konu Seçiniz`;
+
+      const topicsContainer = document.getElementById("topicsList");
+      topicsContainer.innerHTML = "";
+      besyoData[courseName].forEach(topic => {
+        const card = document.createElement("div");
+        card.className = "item-card";
+        card.onclick = () => selectTopic(topic);
+        card.innerHTML = `<span class="item-title">${topic}</span><span class="item-arrow">→</span>`;
+        topicsContainer.appendChild(card);
+      });
+    }
+
+    async function selectTopic(topicName) {
+      selectedTopic = topicName;
+      document.getElementById("topicStep").style.display = "none";
+      document.getElementById("questionStep").style.display = "block";
+      document.getElementById("loadingView").style.display = "block";
+      document.getElementById("loadingText").textContent = "Bulut veritabanından sorular kontrol ediliyor...";
+      document.getElementById("questionView").innerHTML = "";
+
+      const binName = `${selectedCourse}_${selectedTopic}`.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+      try {
+        let cloudQuestions = await fetchFromCloud(binName);
+
+        if (cloudQuestions && cloudQuestions.length > 0) {
+          console.log("Sorular buluttan getirildi!");
+          currentQuestions = cloudQuestions;
+        } else {
+          document.getElementById("loadingText").textContent = "Bu konu ilk defa açılıyor. 60 soru üretilip bulut veritabanına kaydediliyor (10-15 sn)...";
+          currentQuestions = await generate60Questions(selectedCourse, selectedTopic);
+          
+          document.getElementById("loadingText").textContent = "Sorular ortak veritabanına kaydediliyor...";
+          await saveToCloud(binName, currentQuestions);
+        }
+
+        currentIndex = 0;
+        document.getElementById("loadingView").style.display = "none";
+        renderQuestion();
+      } catch (err) {
+        alert("İşlem sırasında hata oluştu: " + err.message);
+        goBack();
+      }
+    }
+
+    async function generate60Questions(course, topic) {
+      const prompt = `Sen bir BESYO akademisyenisin. ${course} dersinin "${topic}" konusu için Orta-Zor seviyede tam 60 adet test sorusu üret.
+      SADECE aşağıdaki formatta geçerli bir JSON DİZİSİ döndür, başka hiçbir açıklama metni ekleme:
+      [
+        {
+          "question": "Soru metni...",
+          "options": { "A": "...", "B": "...", "C": "...", "D": "...", "E": "..." },
+          "correct": "A",
+          "explanation": "Akademik açıklama...",
+          "proTip": "💡 Sınavda Unutma: Püf nokta..."
+        }
+      ]`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseMimeType: "application/json" }
+        })
+      });
+
+      const data = await response.json();
+      if (!data.candidates || !data.candidates[0]) throw new Error("Yapay zekadan yanıt alınamadı.");
+      
+      const rawText = data.candidates[0].content.parts.map(p => p.text).join("");
+      const s = rawText.indexOf("["), e = rawText.lastIndexOf("]");
+      return JSON.parse(rawText.slice(s, e + 1));
+    }
+
+    async function fetchFromCloud(binName) {
+      try {
+        const res = await fetch(`https://api.jsonbin.io/v3/b`, {
+          headers: { "X-Master-Key": JSONBIN_MASTER_KEY }
+        });
+        const data = await res.json();
+        
+        if (data && Array.isArray(data)) {
+          const matchedBin = data.find(b => b.snippetMeta && b.snippetMeta.name === binName);
+          if (matchedBin) {
+            const binRes = await fetch(`https://api.jsonbin.io/v3/b/${matchedBin.record}`, {
+              headers: { "X-Master-Key": JSONBIN_MASTER_KEY }
+            });
+            const binData = await binRes.json();
+            return binData.record;
+          }
+        }
+        return null;
+      } catch (e) {
+        console.warn("Bulut okuma hatası:", e);
+        return null;
+      }
+    }
+
+    async function saveToCloud(binName, questions) {
+      try {
+        await fetch(`https://api.jsonbin.io/v3/b`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Master-Key": JSONBIN_MASTER_KEY,
+            "X-Bin-Name": binName
+          },
+          body: JSON.stringify(questions)
+        });
+        console.log("Sorular buluta kaydedildi!");
+      } catch (e) {
+        console.error("Bulut kaydetme hatası:", e);
+      }
+    }
+
+    function renderQuestion() {
+      if (currentIndex >= currentQuestions.length) {
+        alert("Konuya ait tüm sorular tamamlandı!");
+        goBack();
+        return;
+      }
+
+      const q = currentQuestions[currentIndex];
+      const container = document.getElementById("questionView");
+      let optionsHTML = "";
+      
+      for (let key in q.options) {
+        optionsHTML += `<button class="option-btn" onclick="checkAnswer(this, '${key}', '${q.correct}')"><strong>${key})</strong> ${q.options[key]}</button>`;
+      }
+
+      container.innerHTML = `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; margin-bottom:0.8rem;">
+            <span class="badge">${selectedCourse} — ${selectedTopic}</span>
+            <span class="badge" style="color:var(--warning); border-color:rgba(245,158,11,0.3); background:rgba(245,158,11,0.15);">Soru ${currentIndex + 1} / ${currentQuestions.length}</span>
+          </div>
+          <div class="question-text">${q.question}</div>
+          <div class="options-list">${optionsHTML}</div>
+
+          <div class="explanation-box" id="expBox">
+            <strong style="color:var(--primary); font-size:0.85rem;">AKADEMİK AÇIKLAMA:</strong>
+            <p style="font-size:0.9rem; color:var(--text-muted); margin-top:0.3rem;">${q.explanation || ""}</p>
+          </div>
+
+          <div class="pro-tip-box" id="tipBox">
+            <strong style="color:var(--warning);">AKILDA KALICI NOT:</strong>
+            <p style="margin-top:0.2rem;">${q.proTip || ""}</p>
+          </div>
+
+          <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Sıradaki Soruya Geç →</button>
+        </div>
+      `;
+    }
+
+    function checkAnswer(btn, selected, correct) {
+      const buttons = btn.parentElement.getElementsByClassName("option-btn");
+      for (let b of buttons) { b.disabled = true; }
+      
+      if (selected === correct) {
+        btn.classList.add("correct");
+      } else {
+        btn.classList.add("wrong");
+        for (let b of buttons) {
+          if (b.textContent.trim().startsWith(correct)) b.classList.add("correct");
+        }
+      }
+      document.getElementById("expBox").style.display = "block";
+      document.getElementById("tipBox").style.display = "block";
+      document.getElementById("nextBtn").style.display = "block";
+    }
+
+    function nextQuestion() {
+      currentIndex++;
+      renderQuestion();
+    }
+
+    function goBack() {
+      const topicStep = document.getElementById("topicStep");
+      const questionStep = document.getElementById("questionStep");
+      if (questionStep.style.display === "block") {
+        questionStep.style.display = "none";
+        topicStep.style.display = "block";
+      } else if (topicStep.style.display === "block") {
+        topicStep.style.display = "none";
+        document.getElementById("courseStep").style.display = "block";
+        document.getElementById("backBtn").style.display = "none";
+      }
+    }
+
+    window.onload = renderCourses;
+  </script>
+</body>
+</html>
+
